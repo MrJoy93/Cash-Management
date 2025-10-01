@@ -62,6 +62,35 @@
     .value.pos{color:#a7ffb3}
     .value.neg{color:var(--danger)}
 
+    header.topbar{
+  position:fixed;       /* ← sticky から fixed に変更 */
+  top:0;
+  left:0;
+  width:100%;
+  z-index:100;
+  background:rgba(24,24,48,.9);
+  backdrop-filter:blur(8px);
+  border-bottom:1.5px solid #0ff7ff55;
+  box-shadow:0 4px 32px #161a2899;
+  padding:8px 16px;
+}
+
+header.topbar .titlebar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between; /* タイトル左、誤差右 */
+}
+
+header.topbar h1{
+  margin:0;
+  font-size:16px;
+  letter-spacing:.08em;
+}
+
+main{
+  margin-top:60px;  /* ヘッダー高さぶん調整 */
+}
+
     /* ===== Responsive ===== */
     @media (max-width: 720px){
       main{padding-bottom:120px}
@@ -523,9 +552,17 @@ async function saveRemote(auto = false){
     document.getElementById('btnClear').addEventListener('click', ()=>{ if(!confirm('この月のデータを初期化します。よろしいですか？')) return; state.days = emptyDays(); state.counter = emptyCounter(); renderAll(); autosave(); });
 
     // ==== Init ====
-    autoload();
-    if(!state.month){ const now=new Date(); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0'); state.month=`${y}-${m}`; }
-    renderAll();
+autoload();
+if(!state.month){
+  const now=new Date();
+  const y=now.getFullYear();
+  const m=String(now.getMonth()+1).padStart(2,'0');
+  state.month=`${y}-${m}`;
+}
+renderAll();
+
+// ページ表示時にFirebaseから読み込み
+loadRemote();
 
     // ====== 簡易テストハーネス ======
     function runTests(){
