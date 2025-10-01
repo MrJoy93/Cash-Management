@@ -113,6 +113,9 @@
       <div class="spacer"></div>
       <div class="pill" id="overall-pill">合算の誤差: ¥0</div>
     </div>
+
+    <div id="saveStatus" style="font-size:12px;color:#97e4f5;margin-left:8px"></div>
+
   </header>
 
   <main>
@@ -227,6 +230,7 @@
         <p>下の <code>firebaseConfig</code> に自分のキーを設定して、匿名認証と Cloud Firestore を有効化してください。未設定の場合は自動的に <strong>localStorage</strong> を使います。</p>
       </details>
     </section>
+    
 
   </main>
 
@@ -411,7 +415,15 @@
 
     // ==== 保存系 ====
     const STORAGE_KEY = 'cash-gap-v3';
-    function autosave(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+    function autosave(){
+     try{ 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
+     }catch(e){}
+
+     // Firebase にもオートセーブ（入力ごとに即送信せず1秒遅延）
+     if(saveTimer) clearTimeout(saveTimer);
+     saveTimer = setTimeout(()=> saveRemote(true), 1000);
+    }
     function autoload(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return; const s = JSON.parse(raw); Object.assign(state, normalizeState(s)); }catch(e){} }
 
     // ==== Firebase（任意） ====
@@ -434,7 +446,35 @@
         const app=initializeApp(firebaseConfig); const db=getFirestore(app); const auth=getAuth(app); await signInAnonymously(auth); return { db, doc, getDoc, setDoc };
       }catch(err){ console.warn('Firebase not available:', err); return null; }
     }
-    async function saveRemote(){ if(!fb) fb = await useFirebase(); if(!fb){ alert('Firebase未設定のため、ローカル保存のみ行いました。'); return; } const {db,doc,setDoc}=fb; const monthKey = state.month || new Date().toISOString().slice(0,7); await setDoc(doc(db,'cash-gap',monthKey), state, {merge:true}); alert('Firebaseに保存しました'); }
+let saveTimer = null;   // 入力が続いたときの遅延セーブ用
+let saving = false;     // 保存中フラグ
+
+async function saveRemote(auto = false){
+  if(!fb) fb = await useFirebase();
+  if(!fb){ 
+    if(!auto) alert('Firebase未設定のため、ローカル保存のみ行いました。'); 
+    return; 
+  }
+
+  const statusEl = document.getElementById("saveStatus");
+  saving = true;
+  if(statusEl) statusEl.textContent = "保存中…";
+
+  const {db,doc,setDoc}=fb;
+  const monthKey = state.month || new Date().toISOString().slice(0,7);
+
+  try {
+    await setDoc(doc(db,'cash-gap',monthKey), state, {merge:true});
+    if(statusEl) statusEl.textContent = auto ? "自動保存しました" : "保存しました";
+  } catch(err){
+    console.error(err);
+    if(statusEl) statusEl.textContent = "保存エラー";
+  } finally {
+    saving = false;
+    // 2秒後にメッセージを消す
+    setTimeout(()=>{ if(statusEl) statusEl.textContent=""; }, 2000);
+  }
+}
     async function loadRemote(){ if(!fb) fb = await useFirebase(); if(!fb){ alert('Firebase未設定です。ローカルの自動保存を読み込みます。'); renderAll(); return; } const {db,doc,getDoc}=fb; const monthKey=state.month||new Date().toISOString().slice(0,7); const snap=await getDoc(doc(db,'cash-gap',monthKey)); if(snap.exists()){ Object.assign(state, normalizeState(snap.data())); } renderAll(); }
 
     // ==== Import / Export ====
@@ -521,3 +561,4 @@
   </script>
 </body>
 </html>
+
