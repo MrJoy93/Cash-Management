@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>現金誤差チェッカー｜2店舗×31日 Ver.1.0</title>
+  <title>現金誤差チェッカー｜2店舗×31日</title>
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -421,7 +421,15 @@
         const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
         const { getFirestore, doc, getDoc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
         const { getAuth, signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-        const firebaseConfig = { apiKey:"YOUR_API_KEY", authDomain:"YOUR_AUTH_DOMAIN", projectId:"YOUR_PROJECT_ID", storageBucket:"YOUR_STORAGE_BUCKET", messagingSenderId:"YOUR_SENDER_ID", appId:"YOUR_APP_ID" };
+        const firebaseConfig = {
+                                 apiKey: "AIzaSyATs-02Ale5AKN5DYIymvyw4PNLeHkj4ZQ",
+                                 authDomain: "cash-management-162a8.firebaseapp.com",
+                                 projectId: "cash-management-162a8",
+                                 storageBucket: "cash-management-162a8.firebasestorage.app",
+                                 messagingSenderId: "1081483289087",
+                                 appId: "1:1081483289087:web:7f4e123104535147be07ca",
+                                 measurementId: "G-MEBEGXV4M1"
+                                };
         if(!firebaseConfig.apiKey || firebaseConfig.apiKey==='YOUR_API_KEY') return null;
         const app=initializeApp(firebaseConfig); const db=getFirestore(app); const auth=getAuth(app); await signInAnonymously(auth); return { db, doc, getDoc, setDoc };
       }catch(err){ console.warn('Firebase not available:', err); return null; }
@@ -513,4 +521,3 @@
   </script>
 </body>
 </html>
-
