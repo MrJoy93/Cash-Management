@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>現金誤差チェッカー｜2店舗×31日</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=M+PLUS+2:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --brand:#00f5ff; --panel:rgba(30,38,60,.78); --text:#eaf6ff; --muted:#97e4f5;
+      --bg-grad: linear-gradient(135deg, #191924, #212c4a 80%);
+      --card:#162038;
+      --danger:#ffb3c1;
+    }
+    *{box-sizing:border-box}
+    html,body{overflow-x:hidden}
+    body{margin:0;background:var(--bg-grad);color:var(--text);font-family:'Orbitron','M PLUS 2','Segoe UI',Roboto,system-ui,sans-serif;letter-spacing:.02em}
+
+    /* ===== Topbar ===== */
+    header.topbar{position:sticky;top:0;z-index:50;background:rgba(24,24,48,.78);backdrop-filter:blur(8px);border-bottom:1.5px solid #0ff7ff55;box-shadow:0 4px 32px #161a2899}
+    .tabs-bar{display:flex;align-items:center;gap:10px;padding:10px 12px}
+    .spacer{flex:1}
+    .pill{font-weight:700;color:#eaf6ff;background:rgba(0,245,255,.16);border:1px solid rgba(0,245,255,.35);padding:6px 10px;border-radius:10px;white-space:nowrap}
+
+    main{max-width:900px;margin:10px auto 80px;padding:0 10px}
+
+    /* ===== Cards / Groups ===== */
+    .group{background:var(--panel);border:1px solid rgba(0,245,255,.18);border-radius:14px;padding:14px;margin:12px 0;box-shadow:0 2px 12px #00f5ff22}
+    .group h3{margin:0 0 10px;font-size:18px;color:#fff}
+
+    /* ===== Controls Row ===== */
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .input, input, select, button{font-family:inherit}
+    .input, input, select{padding:12px 14px;border-radius:10px;border:1px solid rgba(0,245,255,.35);background:#273a57;color:#eaf6ff}
+    .btn{padding:12px 14px;border-radius:10px;border:1px solid rgba(0,245,255,.35);background:#1c2a4a;color:#eaf6ff;cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,#009be6 40%,#072259 100%);border-color:#00eaff}
+    .btn.destructive{background:linear-gradient(90deg,#f73378 30%,#d80032 100%);border-color:#d80032}
+
+    /* ===== Day Table (Unified) ===== */
+    .table-wrap{width:100%;overflow-x:auto}
+    table{width:100%;border-collapse:separate;border-spacing:0;background:#162038;border-radius:12px;table-layout:fixed;font-size:14px}
+    th,td{white-space:nowrap;border-bottom:1px solid rgba(0,245,255,.25);padding:8px}
+    th{background:#20365a;color:#00f5ff;position:sticky;top:0;z-index:1}
+    tr:last-child td{border-bottom:none}
+    .num{text-align:right}
+    .sum{font-weight:700}
+    table input{width:100%;max-width:100%;display:block;padding:10px 10px;min-width:0}
+
+    /* ===== Cash Counter (Unified) ===== */
+    .counter-grid{display:grid;grid-template-columns:minmax(120px,1fr) 120px 120px;gap:8px;align-items:center}
+    .counter-grid .head{color:#00f5ff}
+    .counter-grid input{width:100%;text-align:right}
+    .counter-grid .denom{background:#0d2037;border-radius:8px;padding:8px}
+
+    .totals{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+    .total-card{background:var(--card);border:1px solid rgba(0,245,255,.18);border-radius:12px;padding:12px}
+    .total-card h4{margin:0 0 8px;color:#9fd9ff;font-size:14px}
+    .total-card .value{font-size:20px;font-weight:700;text-align:right}
+    .value.pos{color:#a7ffb3}
+    .value.neg{color:var(--danger)}
+
+    /* ===== Responsive ===== */
+    @media (max-width: 720px){
+      main{padding-bottom:120px}
+      table{font-size:13px}
+      th,td{padding:6px}
+      table input{padding:10px 8px;font-size:16px}
+      .row .input, .row .btn{padding:10px 12px;font-size:16px}
+      .counter-grid{grid-template-columns:1fr;}
+      .counter-grid .denom{display:flex;align-items:center;justify-content:space-between}
+      .counter-grid .head{grid-column:1/-1}
+    }
+
+    /* ===== Auth Overlay ===== */
+    .auth-mask{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(1200px 800px at 50% -10%, #0a1628 10%, #0b1324 60%, #08101f 100%)}
+    .auth-card{width:min(92vw,420px);background:#101a2c;border:1px solid rgba(0,245,255,.25);border-radius:16px;padding:18px;box-shadow:0 10px 50px #000a}
+    .auth-card h2{margin:0 0 8px;font-size:18px;color:#c7f5ff}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .stack{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+    body.locked header, body.locked main{display:none}
+  .value.pos{color:#a7ffb3}
+    .value.neg{color:var(--danger)}
+    .settle-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .settle-card{background:var(--card);border:1px solid rgba(0,245,255,.18);border-radius:12px;padding:12px}
+    .settle-card h4{margin:0 0 8px;color:#9fd9ff;font-size:14px}
+    .rowline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0}
+    .rowline strong{min-width:140px;text-align:right}
+    @media (max-width: 720px){ .settle-grid{grid-template-columns:1fr} }
+  </style>
+</head>
+<body class="locked">
+  <!-- === Auth Overlay === -->
+  <div id="authMask" class="auth-mask" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-card">
+      <h2 id="authTitle">ログイン</h2>
+      <p class="muted small">IDとパスワードを入力してください。<br><span id="authMsg"></span></p>
+      <label class="stack">ID
+        <input id="authId" class="input" type="text" autocomplete="username" inputmode="email" />
+      </label>
+      <label class="stack">パスワード
+        <input id="authPass" class="input" type="password" autocomplete="current-password" />
+      </label>
+      <button id="authBtn" class="btn primary" style="width:100%;margin-top:8px">ENTER</button>
+    </div>
+  </div>
+  <header class="topbar" aria-label="Header">
+    <div class="tabs-bar">
+      <h1 style="margin:0;font-size:16px;letter-spacing:.08em">現金誤差チェッカー｜2店舗×31日</h1>
+      <div class="spacer"></div>
+      <div class="pill" id="overall-pill">合算の誤差: ¥0</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Common Controls -->
+    <section class="group">
+      <div class="row">
+        <label>対象年月
+          <input class="input" type="month" id="targetMonth" />
+        </label>
+        <button class="btn" id="btnLoad">読込</button>
+        <button class="btn primary" id="btnSave">保存</button>
+        <button class="btn" id="btnExport">エクスポート</button>
+        <input type="file" id="fileImport" accept="application/json" hidden />
+        <button class="btn" id="btnImport">インポート</button>
+        <button class="btn destructive" id="btnClear">この月のデータを消去</button>
+      </div>
+    </section>
+
+    <!-- Unified Daily Input -->
+    <section class="group">
+      <h3>日次入力（A+B統合）</h3>
+      <div class="table-wrap">
+        <table id="tableAB">
+          <thead>
+            <tr>
+              <th style="width:64px">日</th>
+              <th class="num">店舗A（現金残）</th>
+              <th class="num">店舗B（現金残）</th>
+              <th class="num">立替</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <th>小計</th>
+              <td class="num sum" id="sumA_remain">0</td>
+              <td class="num sum" id="sumB_remain">0</td>
+              <td class="num sum" id="sum_t1">0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- Unified Counter -->
+    <section id="counterAllSec" class="group">
+      <h3>手持ち現金カウント（合算）</h3>
+      <div class="counter-grid" id="counterAll"></div>
+      <div class="totals">
+        <div class="total-card">
+          <h4>2店舗 合算 予想現金</h4>
+          <div class="value" id="expectedAll">¥0</div>
+        </div>
+        <div class="total-card">
+          <h4>2店舗 合算 手持ち現金</h4>
+          <div class="value" id="countedAll">¥0</div>
+        </div>
+        <div class="total-card" style="grid-column:1/-1">
+          <h4>2店舗 合算 誤差（手持ち − 予想）</h4>
+          <div class="value" id="diffAll">¥0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settlement Simulator -->
+    <section class="group">
+      <h3>清算シミュレーター（半期15日／月末）</h3>
+      <div class="settle-grid">
+        <div class="settle-card">
+          <h4>1〜15日</h4>
+          <div class="rowline"><span>店舗A+B 合計</span><strong id="h1_sumAB">0</strong></div>
+          <div class="rowline"><span>立替合計</span><strong id="h1_t1">0</strong></div>
+          <div class="rowline"><span>ネット（A+B−立替）</span><strong id="h1_net">0</strong></div>
+          <hr>
+          <div class="rowline"><span>本社へ送金</span><strong id="h1_toHQ">0</strong></div>
+          <div class="rowline"><span>本社から補填</span><strong id="h1_fromHQ">0</strong></div>
+          <div class="rowline"><span>立替の清算支払</span><strong id="h1_repayT">0</strong></div>
+          <div class="rowline"><span>清算後残</span><strong id="h1_after">0</strong></div>
+        </div>
+        <div class="settle-card">
+          <h4>16日〜月末</h4>
+          <div class="rowline"><span>店舗A+B 合計</span><strong id="h2_sumAB">0</strong></div>
+          <div class="rowline"><span>立替合計</span><strong id="h2_t1">0</strong></div>
+          <div class="rowline"><span>ネット（A+B−立替）</span><strong id="h2_net">0</strong></div>
+          <hr>
+          <div class="rowline"><span>本社へ送金</span><strong id="h2_toHQ">0</strong></div>
+          <div class="rowline"><span>本社から補填</span><strong id="h2_fromHQ">0</strong></div>
+          <div class="rowline"><span>立替の清算支払</span><strong id="h2_repayT">0</strong></div>
+          <div class="rowline"><span>清算後残</span><strong id="h2_after">0</strong></div>
+        </div>
+      </div>
+      <p class="muted small">ルール：ネットがプラスなら管理者→本社へ送金。マイナスなら本社→管理者へ補填し、その補填から立替を清算。最終残高はゼロになるはずです。</p>
+    </section>
+
+    <!-- Per-store overview (予想現金のみ) -->
+    <section class="group">
+      <div class="totals">
+        <div class="total-card">
+          <h4>店舗A 予想現金</h4>
+          <div class="value" id="expectedA">¥0</div>
+        </div>
+        <div class="total-card">
+          <h4>店舗B 予想現金</h4>
+          <div class="value" id="expectedB">¥0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="group">
+      <details>
+        <summary>Firebase 接続設定（必要な場合だけ展開）</summary>
+        <p>下の <code>firebaseConfig</code> に自分のキーを設定して、匿名認証と Cloud Firestore を有効化してください。未設定の場合は自動的に <strong>localStorage</strong> を使います。</p>
+      </details>
+    </section>
+
+  </main>
+
+  <!-- Firebase SDK (必要なら使用。未設定でも動作) -->
+  <script type="module">
+    // ==== ユーティリティ ====
+    const JPY = n => new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0}).format(n||0);
+    const toInt = v => { const s = String(v ?? '').replace(/,/g,''); return isFinite(+s) ? Math.floor(+s) : 0; };
+    const fmtComma = n => toInt(n).toLocaleString('ja-JP');
+
+    // 端数処理ヘルパ（10円単位切り捨て等）
+    const round10down = n => Math.floor(n/10)*10;
+
+    // ==== 券種定義 ====
+    const DENOMS = [10000,5000,2000,1000,500,100,50,10,5,1];
+
+    // ==== 正規化 ====
+    function normalizeDaysUnified(arr){
+      const base = Array.from({length:31},()=>({a:0,b:0,t1:0}));
+      if(Array.isArray(arr)){
+        for(let i=0;i<Math.min(31, arr.length); i++){
+          const d = arr[i]||{}; base[i] = { a: toInt(d.a), b: toInt(d.b), t1: toInt(d.t1) };
+        }
+      }
+      return base;
+    }
+    function normalizeCounter(obj){
+      const res={}; DENOMS.forEach(v=> res[v] = toInt(obj?.[v] ?? 0)); return res;
+    }
+    function migrateOldState(s){
+      if(s.days && Array.isArray(s.days)) return s; // already new
+      const days = Array.from({length:31},()=>({a:0,b:0,t1:0}));
+      const A = s.stores?.A?.days || [];
+      const B = s.stores?.B?.days || [];
+      for(let i=0;i<31;i++){
+        const da = A[i]||{}; const db = B[i]||{};
+        days[i].a = toInt(da.remain);
+        days[i].b = toInt(db.remain);
+        days[i].t1 = toInt(da.t1 ?? db.t1 ?? 0);
+      }
+      // unify counters if old ones exist
+      const aCnt = s.stores?.A?.counter || {}; const bCnt = s.stores?.B?.counter || {};
+      s.counter = DENOMS.reduce((acc,k)=>{ acc[k]=(toInt(aCnt[k])+toInt(bCnt[k])); return acc; }, {});
+      s.days = days; return s;
+    }
+    function normalizeState(s){
+      s = migrateOldState(s);
+      s.days = normalizeDaysUnified(s.days);
+      s.counter = normalizeCounter(s.counter||{});
+      return s;
+    }
+
+    // ==== データモデル ====
+    const emptyDays = () => Array.from({length:31},()=>({a:0,b:0,t1:0}));
+    const emptyCounter = () => ({10000:0,5000:0,2000:0,1000:0,500:0,100:0,50:0,10:0,5:0,1:0});
+    const state = normalizeState({ month:'', days: emptyDays(), counter: emptyCounter() });
+
+    // ==== 入力フォーマット（カンマ表示）====
+    function attachCommaHandlers(input){
+      if(!input) return;
+      const unformat = v => String(v||'').replace(/,/g,'');
+      input.addEventListener('focus', ()=>{ input.value = unformat(input.value); input.select?.(); });
+      input.addEventListener('blur',  ()=>{ input.value = fmtComma(input.value); });
+      // 初期表示もカンマ
+      input.value = fmtComma(input.value||'0');
+    }
+
+    // ==== UI構築：統合日次表 ====
+    function buildDayTableUnified(tbody){
+      if(!tbody) return;
+      tbody.innerHTML='';
+      for(let i=1;i<=31;i++){
+        const tr=document.createElement('tr');
+        tr.innerHTML = `
+          <td class="num">${i}</td>
+          <td><input class="num" inputmode="numeric" data-k="a" data-idx="${i-1}" /></td>
+          <td><input class="num" inputmode="numeric" data-k="b" data-idx="${i-1}" /></td>
+          <td><input class="num" inputmode="numeric" data-k="t1" data-idx="${i-1}" /></td>
+        `;
+        tbody.appendChild(tr);
+      }
+      tbody.addEventListener('input', e=>{
+        const el = e.target; if(!(el instanceof HTMLInputElement)) return;
+        const idx = +el.dataset.idx; const k = el.dataset.k;
+        const v = toInt(el.value);
+        if(!state.days[idx]) state.days[idx] = {a:0,b:0,t1:0};
+        state.days[idx][k] = v;
+        updateSums();
+      renderSettlement(); autosave();
+      }, { passive:true });
+
+      // カンマフォーマット適用
+      tbody.querySelectorAll('input').forEach(attachCommaHandlers);
+    }
+
+    // ==== カウンター（合算） ====
+    function buildCounterAll(container){
+      if(!container) return;
+      container.innerHTML='';
+      const head=document.createElement('div'); head.className='head'; head.textContent='券種 / 枚数 / 金額';
+      container.appendChild(head); container.appendChild(document.createElement('div')); container.appendChild(document.createElement('div'));
+      DENOMS.forEach(val=>{
+        const denom=document.createElement('div'); denom.className='denom'; denom.textContent = `${val>=1000? val.toLocaleString('ja-JP')+'円券' : val+'円'}`;
+        const qty=document.createElement('input'); qty.type='number'; qty.min='0'; qty.step='1'; qty.inputMode='numeric'; qty.value= state.counter[val]||0;
+        qty.addEventListener('input',()=>{ state.counter[val] = toInt(qty.value); updateSums(); autosave(); });
+        const amt=document.createElement('input'); amt.readOnly=true; amt.tabIndex=-1; amt.value='0';
+        container.appendChild(denom); container.appendChild(qty); container.appendChild(amt);
+      });
+    }
+
+    // ==== 計算 ====
+    function sumAll(){
+      const sumA = state.days.reduce((a,d)=>a+toInt(d.a),0);
+      const sumB = state.days.reduce((a,d)=>a+toInt(d.b),0);
+      const sumT1= state.days.reduce((a,d)=>a+toInt(d.t1),0);
+      const countedAll = Object.entries(state.counter).reduce((a,[k,v])=>a + (toInt(k)*toInt(v)),0);
+      const expectedAll = sumA + sumB + sumT1; // 改訂仕様：必要手持ち = 現金残合計 + 立替合計（手持 − 現金残 − 立替 = 余剰）
+      return { sumA, sumB, sumT1, countedAll, expectedAll, expectedA: sumA, expectedB: sumB, diffAll: countedAll - expectedAll };
+    }
+
+    // ==== 清算計算 ====
+    function daysInMonth(ym){
+      if(!ym) return 31; // フォールバック
+      const [y,m] = ym.split('-').map(n=>+n);
+      return new Date(y, m, 0).getDate();
+    }
+    function sumRange(startDay, endDay){
+      const last = daysInMonth(state.month||'');
+      const s = Math.max(1, startDay), e = Math.min(endDay, last);
+      let a=0,b=0,t=0; for(let d=s; d<=e; d++){ const row = state.days[d-1]||{a:0,b:0,t1:0}; a+=toInt(row.a); b+=toInt(row.b); t+=toInt(row.t1);} 
+      const sumAB = a+b; const net = sumAB - t;
+      const toHQ = Math.max(net,0); const fromHQ = Math.max(-net,0); const repayT = t;
+      const after = (sumAB + fromHQ) - repayT - toHQ; // 最終残
+      return { a, b, t, sumAB, net, toHQ, fromHQ, repayT, after };
+    }
+    function renderSettlement(){
+      const h1 = sumRange(1,15);
+      const h2 = sumRange(16,31);
+      const setRow = (id,v)=>{ const el=document.getElementById(id); if(!el) return; el.textContent = v.toLocaleString('ja-JP'); el.classList.toggle('neg', (typeof v==='number' && v<0)); };
+      // 1-15
+      setRow('h1_sumAB', h1.sumAB); setRow('h1_t1', h1.t); setRow('h1_net', h1.net); setRow('h1_toHQ', h1.toHQ); setRow('h1_fromHQ', h1.fromHQ); setRow('h1_repayT', h1.repayT); setRow('h1_after', h1.after);
+      // 16-end
+      setRow('h2_sumAB', h2.sumAB); setRow('h2_t1', h2.t); setRow('h2_net', h2.net); setRow('h2_toHQ', h2.toHQ); setRow('h2_fromHQ', h2.fromHQ); setRow('h2_repayT', h2.repayT); setRow('h2_after', h2.after);
+    }
+
+    function updateSums(){
+      const S = sumAll();
+      // 小計
+      setSignedText(document.getElementById('sumA_remain'), S.sumA);
+      setSignedText(document.getElementById('sumB_remain'), S.sumB);
+      setSignedText(document.getElementById('sum_t1'),      S.sumT1);
+      // 合算カード
+      document.getElementById('expectedAll').textContent = JPY(S.expectedAll); // 必要手持ち（現金残+立替）
+      document.getElementById('countedAll').textContent  = JPY(S.countedAll);
+      setDiff('diffAll', S.diffAll);
+      document.getElementById('overall-pill').textContent = `合算の誤差: ${JPY(S.diffAll)}`;
+      // 店舗別予想
+      document.getElementById('expectedA').textContent = JPY(S.expectedA);
+      document.getElementById('expectedB').textContent = JPY(S.expectedB);
+      // カウンター金額欄更新
+      refreshCounterAmounts('counterAll', state.counter);
+    }
+
+    function setSignedText(el, n){ if(!el) return; el.textContent = n.toLocaleString('ja-JP'); el.classList.toggle('neg', n<0); }
+
+    function setDiff(id, n){
+      const el = document.getElementById(id); if(!el) return;
+      el.textContent = JPY(n);
+      el.classList.toggle('pos', n >= 0);
+      el.classList.toggle('neg', n < 0);
+    }
+
+    function refreshCounterAmounts(counterId, storeCounter){
+      const container = document.getElementById(counterId); if(!container) return;
+      const inputs = container.querySelectorAll('input');
+      let idx=0; DENOMS.forEach(val=>{
+        const qtyEl = inputs[idx++]; const amtEl = inputs[idx++];
+        if(!qtyEl || !amtEl) return;
+        const qty = toInt(qtyEl.value); amtEl.value = (qty*val).toLocaleString('ja-JP');
+      });
+    }
+
+    // ==== 保存系 ====
+    const STORAGE_KEY = 'cash-gap-v3';
+    function autosave(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+    function autoload(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return; const s = JSON.parse(raw); Object.assign(state, normalizeState(s)); }catch(e){} }
+
+    // ==== Firebase（任意） ====
+    let fb = null;
+    async function useFirebase(){
+      try{
+        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getFirestore, doc, getDoc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const { getAuth, signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        const firebaseConfig = { apiKey:"YOUR_API_KEY", authDomain:"YOUR_AUTH_DOMAIN", projectId:"YOUR_PROJECT_ID", storageBucket:"YOUR_STORAGE_BUCKET", messagingSenderId:"YOUR_SENDER_ID", appId:"YOUR_APP_ID" };
+        if(!firebaseConfig.apiKey || firebaseConfig.apiKey==='YOUR_API_KEY') return null;
+        const app=initializeApp(firebaseConfig); const db=getFirestore(app); const auth=getAuth(app); await signInAnonymously(auth); return { db, doc, getDoc, setDoc };
+      }catch(err){ console.warn('Firebase not available:', err); return null; }
+    }
+    async function saveRemote(){ if(!fb) fb = await useFirebase(); if(!fb){ alert('Firebase未設定のため、ローカル保存のみ行いました。'); return; } const {db,doc,setDoc}=fb; const monthKey = state.month || new Date().toISOString().slice(0,7); await setDoc(doc(db,'cash-gap',monthKey), state, {merge:true}); alert('Firebaseに保存しました'); }
+    async function loadRemote(){ if(!fb) fb = await useFirebase(); if(!fb){ alert('Firebase未設定です。ローカルの自動保存を読み込みます。'); renderAll(); return; } const {db,doc,getDoc}=fb; const monthKey=state.month||new Date().toISOString().slice(0,7); const snap=await getDoc(doc(db,'cash-gap',monthKey)); if(snap.exists()){ Object.assign(state, normalizeState(snap.data())); } renderAll(); }
+
+    // ==== Import / Export ====
+    function exportJSON(){ const monthKey=state.month||new Date().toISOString().slice(0,7); const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`cash-gap_${monthKey}.json`; a.click(); URL.revokeObjectURL(a.href); }
+    async function importJSON(file){ const text=await file.text(); const data=JSON.parse(text); Object.assign(state, normalizeState(data)); renderAll(); autosave(); }
+
+    // ==== Render ====
+    function renderAll(){
+      const monthEl=document.getElementById('targetMonth'); if(monthEl) monthEl.value = state.month || '';
+      // 統合テーブル
+      const tbody = document.querySelector('#tableAB tbody');
+      buildDayTableUnified(tbody);
+      if(tbody){
+        state.days.forEach((d,idx)=>{
+          const row = tbody.children[idx]; if(!row) return;
+          const a = row.querySelector('input[data-k="a"]');
+          const b = row.querySelector('input[data-k="b"]');
+          const t1= row.querySelector('input[data-k="t1"]');
+          if(a) a.value = fmtComma(d.a); if(b) b.value = fmtComma(d.b); if(t1) t1.value = fmtComma(d.t1);
+        });
+      }
+      // 合算カウンタ
+      buildCounterAll(document.getElementById('counterAll'));
+      updateSums();
+    }
+
+    // ==== Auth ====
+    const AUTH_ID = 'admin';
+    const AUTH_PASS = 'pass'; // ← 任意に変更
+    const MAX_TRY = 3;
+    const $ = sel => document.querySelector(sel);
+    function updateAuthMsg(msg, isError=false){ const m=$('#authMsg'); m.textContent=msg||''; m.style.color=isError?'#ff9aa5':'var(--muted)'; }
+    function lockout(){ sessionStorage.setItem('authLocked','1'); updateAuthMsg('エラー: 試行回数が上限に達しました。ページ内容は非表示になっています。', true); }
+    function initAuth(){ const locked=sessionStorage.getItem('authLocked')==='1'; const tries=+(sessionStorage.getItem('authTries')||0); if(locked){ updateAuthMsg('エラー: 試行回数が上限に達しました。ページ内容は非表示のままです。', true); document.body.classList.add('locked'); return; } updateAuthMsg( tries>0 ? `失敗 ${tries} 回 / 残り ${MAX_TRY-tries} 回` : '' ); $('#authBtn').addEventListener('click', doAuth); $('#authPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doAuth(); }); }
+    function doAuth(){ const id=$('#authId').value.trim(); const pw=$('#authPass').value; let tries=+(sessionStorage.getItem('authTries')||0); if(id===AUTH_ID && pw===AUTH_PASS){ sessionStorage.removeItem('authTries'); document.body.classList.remove('locked'); $('#authMask').style.display='none'; return; } tries+=1; sessionStorage.setItem('authTries', String(tries)); if(tries>=MAX_TRY){ lockout(); return; } updateAuthMsg(`IDまたはパスワードが違います。残り ${MAX_TRY-tries} 回`, true); }
+    initAuth();
+
+    // ==== Events ====
+    document.getElementById('targetMonth').addEventListener('change', e=>{ state.month = e.target.value; autosave(); });
+    document.getElementById('btnSave').addEventListener('click', saveRemote);
+    document.getElementById('btnLoad').addEventListener('click', loadRemote);
+    document.getElementById('btnExport').addEventListener('click', exportJSON);
+    document.getElementById('btnImport').addEventListener('click', ()=> document.getElementById('fileImport').click());
+    document.getElementById('fileImport').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importJSON(f); });
+    document.getElementById('btnClear').addEventListener('click', ()=>{ if(!confirm('この月のデータを初期化します。よろしいですか？')) return; state.days = emptyDays(); state.counter = emptyCounter(); renderAll(); autosave(); });
+
+    // ==== Init ====
+    autoload();
+    if(!state.month){ const now=new Date(); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0'); state.month=`${y}-${m}`; }
+    renderAll();
+
+    // ====== 簡易テストハーネス ======
+    function runTests(){
+      const logs=[]; const ok=(n,c)=>{logs.push(`${c?'✅':'❌'} ${n}`); if(!c) throw new Error('TestFailed: '+n)};
+      try{
+        const tbody=document.querySelector('#tableAB tbody');
+        ok('tbody exists', !!tbody);
+        ok('tbody has 31 rows', tbody.children.length===31);
+        const row0=tbody.children[0]; ok('row0 inputs exist', !!row0.querySelector('input[data-k="a"]') && !!row0.querySelector('input[data-k="b"]') && !!row0.querySelector('input[data-k="t1"]'));
+        try{ updateSums(); ok('updateSums runs', true);}catch(e){ console.error(e); ok('updateSums runs', false); }
+        // 合算計算ルール（新）: 余剰 = 手持 − (現金残合計 + 立替合計)
+        // ケース1: 1日だけ A=-100000, B=-100000, 立替=200000, 手持=0 → 余剰0
+        state.days = Array.from({length:31},()=>({a:0,b:0,t1:0}));
+        state.days[0] = {a:-100000, b:-100000, t1:200000};
+        state.counter = {10000:0,5000:0,2000:0,1000:0,500:0,100:0,50:0,10:0,5:0,1:0};
+        let S = sumAll();
+        ok('case1: expectedAll=0 (必要手持ち)', S.expectedAll===0);
+        ok('case1: diffAll=0 (余剰)', S.diffAll===0);
+        // ケース2: 同条件で手持ち=10000 → 余剰=10000
+        state.counter[10000]=1; S = sumAll();
+        ok('case2: diffAll=10000', S.diffAll===10000);
+        // ケース3: 一般式チェック
+        state.days = Array.from({length:31},()=>({a:100,b:200,t1:50}));
+        state.counter = {10000:0,5000:0,2000:0,1000:0,500:0,100:0,50:0,10:0,5:0,1:0};
+        S = sumAll();
+        ok('expectedAll = (A+B)+T1', S.expectedAll === (31*(100+200) + 31*50));
+        logs.push('All tests passed');
+      }catch(err){ logs.push('Tests aborted: '+err.message); }
+      console.log('[Tests]', logs.join('\n')); return logs.join('\n');
+    }
+    if (location.search.includes('test=1') || location.hash==='#test'){
+      setTimeout(()=>{ const out=runTests(); const d=document.createElement('details'); d.open=true; d.innerHTML='<summary>Test Results</summary><pre>'+out+'</pre>'; document.body.prepend(d); }, 0);
+    }
+  </script>
+</body>
+</html>
