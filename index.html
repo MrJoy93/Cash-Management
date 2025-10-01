@@ -416,14 +416,15 @@
     // ==== 保存系 ====
     const STORAGE_KEY = 'cash-gap-v3';
     function autosave(){
-     try{ 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
+    try{ 
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
      }catch(e){}
 
-     // Firebase にもオートセーブ（入力ごとに即送信せず1秒遅延）
-     if(saveTimer) clearTimeout(saveTimer);
-     saveTimer = setTimeout(()=> saveRemote(true), 1000);
+    // Firebase にもオートセーブ（入力ごとに即送信せず1秒遅延）
+    if(saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=> saveRemote(true), 1000);
     }
+
     function autoload(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return; const s = JSON.parse(raw); Object.assign(state, normalizeState(s)); }catch(e){} }
 
     // ==== Firebase（任意） ====
