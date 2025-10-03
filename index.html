@@ -335,9 +335,9 @@ main{
         const tr=document.createElement('tr');
         tr.innerHTML = `
         <td class="num">${i}</td>
-        <td><input class="num" type="text" inputmode="numeric" pattern="^-?[0-9]*$" data-k="a" data-idx="${i-1}" /></td>
-        <td><input class="num" type="text" inputmode="numeric" pattern="^-?[0-9]*$" data-k="b" data-idx="${i-1}" /></td>
-        <td><input class="num" type="text" inputmode="numeric" pattern="^-?[0-9]*$" data-k="t1" data-idx="${i-1}" /></td>
+        <td><input class="num" inputmode="tel" inputmode="numeric" pattern="^-?[0-9]*$" data-k="a" data-idx="${i-1}" /></td>
+        <td><input class="num" inputmode="tel" inputmode="numeric" pattern="^-?[0-9]*$" data-k="b" data-idx="${i-1}" /></td>
+        <td><input class="num" inputmode="tel" inputmode="numeric" pattern="^-?[0-9]*$" data-k="t1" data-idx="${i-1}" /></td>
         `;
         tbody.appendChild(tr);
       }
