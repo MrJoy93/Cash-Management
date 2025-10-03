@@ -119,25 +119,6 @@ main{
     .rowline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0}
     .rowline strong{min-width:140px;text-align:right}
     @media (max-width: 720px){ .settle-grid{grid-template-columns:1fr} }
-
-    .num-input {
-  display: flex;
-  align-items: center;
-}
-.num-input input {
-  flex: 1;
-  text-align: right;
-}
-.minus-btn {
-  margin-left: 4px;
-  padding: 6px 8px;
-  border: 1px solid rgba(0,245,255,.35);
-  background:#1c2a4a;
-  color:#eaf6ff;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
   </style>
 </head>
 <body class="locked">
@@ -353,26 +334,29 @@ main{
       for(let i=1;i<=31;i++){
         const tr=document.createElement('tr');
         tr.innerHTML = `
-  <td class="num">${i}</td>
-  <td>
-    <div class="num-input">
-      <input class="num" type="text" inputmode="decimal" pattern="^-?[0-9]*$" data-k="a" data-idx="${i-1}" />
-      <button type="button" class="minus-btn">±</button>
-    </div>
-  </td>
-  <td>
-    <div class="num-input">
-      <input class="num" type="text" inputmode="decimal" pattern="^-?[0-9]*$" data-k="b" data-idx="${i-1}" />
-      <button type="button" class="minus-btn">±</button>
-    </div>
-  </td>
-  <td>
-    <div class="num-input">
-      <input class="num" type="text" inputmode="decimal" pattern="^-?[0-9]*$" data-k="t1" data-idx="${i-1}" />
-      <button type="button" class="minus-btn">±</button>
-    </div>
-  </td>
-`;
+          <td class="num">${i}</td>
+          <td>
+  <div class="num-input">
+    <input class="num" type="text" inputmode="decimal" 
+           pattern="^-?[0-9]*$" data-k="a" data-idx="${i-1}" />
+    <button type="button" class="minus-btn">±</button>
+  </div>
+</td>
+<td>
+  <div class="num-input">
+    <input class="num" type="text" inputmode="decimal" 
+           pattern="^-?[0-9]*$" data-k="b" data-idx="${i-1}" />
+    <button type="button" class="minus-btn">±</button>
+  </div>
+</td>
+<td>
+  <div class="num-input">
+    <input class="num" type="text" inputmode="decimal" 
+           pattern="^-?[0-9]*$" data-k="t1" data-idx="${i-1}" />
+    <button type="button" class="minus-btn">±</button>
+  </div>
+</td>
+        `;
         tbody.appendChild(tr);
       }
       tbody.addEventListener('input', e=>{
@@ -630,21 +614,6 @@ loadRemote();
     if (location.search.includes('test=1') || location.hash==='#test'){
       setTimeout(()=>{ const out=runTests(); const d=document.createElement('details'); d.open=true; d.innerHTML='<summary>Test Results</summary><pre>'+out+'</pre>'; document.body.prepend(d); }, 0);
     }
-
-// ==== ±ボタン用イベント ==== 
-document.addEventListener("click", e=>{
-  if(e.target.classList.contains("minus-btn")){
-    const input = e.target.previousElementSibling;
-    if(input){
-      if(input.value.startsWith("-")){
-        input.value = input.value.replace(/^-/, ""); // マイナス削除
-      }else{
-        input.value = "-" + input.value; // マイナス付与
-      }
-      input.dispatchEvent(new Event("input")); // 値変更を反映
-    }
-  }
-});
   </script>
 </body>
 </html>
