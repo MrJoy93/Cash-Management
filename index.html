@@ -2,6 +2,9 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
+  <!-- Safariにダークモード対応を宣言 -->
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#121826" media="(prefers-color-scheme: dark)">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>現金誤差 Ver1.2</title>
   <!-- Fonts -->
@@ -9,6 +12,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=M+PLUS+2:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
+    html, body {
+  background-color: #121826 !important;
+  color: #eaf6ff; /* 既存の文字色と統一 */
+}
     :root{
       --brand:#00f5ff; --panel:rgba(30,38,60,.78); --text:#eaf6ff; --muted:#97e4f5;
       --bg-grad: linear-gradient(135deg, #191924, #212c4a 80%);
