@@ -631,7 +631,8 @@ loadRemote();
       setTimeout(()=>{ const out=runTests(); const d=document.createElement('details'); d.open=true; d.innerHTML='<summary>Test Results</summary><pre>'+out+'</pre>'; document.body.prepend(d); }, 0);
     }
 
-    tbody.addEventListener("click", e=>{
+// ==== ±ボタン用イベント ==== 
+document.addEventListener("click", e=>{
   if(e.target.classList.contains("minus-btn")){
     const input = e.target.previousElementSibling;
     if(input){
