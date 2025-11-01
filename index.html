@@ -326,13 +326,17 @@ main{
 
     // ==== 入力フォーマット（カンマ表示）====
     function attachCommaHandlers(input){
-      if(!input) return;
-      const unformat = v => String(v||'').replace(/,/g,'');
-      input.addEventListener('focus', ()=>{ input.value = unformat(input.value); input.select?.(); });
-      input.addEventListener('blur',  ()=>{ input.value = fmtComma(input.value); });
-      // 初期表示もカンマ
-      input.value = fmtComma(input.value||'0');
-    }
+  if(!input) return;
+  const unformat = v => String(v||'').replace(/,/g,'');
+  input.addEventListener('focus', ()=>{ input.value = unformat(input.value); input.select?.(); });
+  input.addEventListener('blur',  ()=>{
+    const v = toInt(input.value);
+    input.value = v === 0 ? '' : fmtComma(v);
+  });
+  // 初期表示もカンマ。ただし0は空欄
+  const v0 = toInt(input.value||0);
+  input.value = v0 === 0 ? '' : fmtComma(v0);
+}
 
     // ==== UI構築：統合日次表 ====
     function buildDayTableUnified(tbody){
@@ -364,18 +368,47 @@ main{
 
     // ==== カウンター（合算） ====
     function buildCounterAll(container){
-      if(!container) return;
-      container.innerHTML='';
-      const head=document.createElement('div'); head.className='head'; head.textContent='券種 / 枚数 / 金額';
-      container.appendChild(head); container.appendChild(document.createElement('div')); container.appendChild(document.createElement('div'));
-      DENOMS.forEach(val=>{
-        const denom=document.createElement('div'); denom.className='denom'; denom.textContent = `${val>=1000? val.toLocaleString('ja-JP')+'円券' : val+'円'}`;
-        const qty=document.createElement('input'); qty.type='number'; qty.min='0'; qty.step='1'; qty.inputMode='numeric'; qty.value= state.counter[val]||0;
-        qty.addEventListener('input',()=>{ state.counter[val] = toInt(qty.value); updateSums(); autosave(); });
-        const amt=document.createElement('input'); amt.readOnly=true; amt.tabIndex=-1; amt.value='0';
-        container.appendChild(denom); container.appendChild(qty); container.appendChild(amt);
-      });
-    }
+  if(!container) return;
+  container.innerHTML='';
+  const head=document.createElement('div');
+  head.className='head';
+  head.textContent='券種 / 枚数 / 金額';
+  container.appendChild(head);
+  container.appendChild(document.createElement('div'));
+  container.appendChild(document.createElement('div'));
+
+  DENOMS.forEach(val=>{
+    const denom=document.createElement('div');
+    denom.className='denom';
+    denom.textContent = `${val>=1000 ? val.toLocaleString('ja-JP')+'円券' : val+'円'}`;
+
+    // ✅ 初期値が0なら空欄に
+    const qty=document.createElement('input');
+    qty.type='number';
+    qty.min='0';
+    qty.step='1';
+    qty.inputMode='numeric';
+    const current = state.counter[val] || 0;
+    qty.value = current === 0 ? '' : current;
+
+    qty.addEventListener('input',()=>{
+      state.counter[val] = toInt(qty.value);
+      updateSums();
+      autosave();
+    });
+
+    // 金額欄（読み取り専用）
+    const amt=document.createElement('input');
+    amt.readOnly=true;
+    amt.tabIndex=-1;
+    amt.value='';
+
+    container.appendChild(denom);
+    container.appendChild(qty);
+    container.appendChild(amt);
+  });
+}
+
 
     // ==== 計算 ====
     function sumAll(){
@@ -520,23 +553,32 @@ async function saveRemote(auto = false){
 
     // ==== Render ====
     function renderAll(){
-      const monthEl=document.getElementById('targetMonth'); if(monthEl) monthEl.value = state.month || '';
-      // 統合テーブル
-      const tbody = document.querySelector('#tableAB tbody');
-      buildDayTableUnified(tbody);
-      if(tbody){
-        state.days.forEach((d,idx)=>{
-          const row = tbody.children[idx]; if(!row) return;
-          const a = row.querySelector('input[data-k="a"]');
-          const b = row.querySelector('input[data-k="b"]');
-          const t1= row.querySelector('input[data-k="t1"]');
-          if(a) a.value = fmtComma(d.a); if(b) b.value = fmtComma(d.b); if(t1) t1.value = fmtComma(d.t1);
-        });
-      }
-      // 合算カウンタ
-      buildCounterAll(document.getElementById('counterAll'));
-      updateSums();
-    }
+  const monthEl=document.getElementById('targetMonth');
+  if(monthEl) monthEl.value = state.month || '';
+
+  // 統合テーブル
+  const tbody = document.querySelector('#tableAB tbody');
+  buildDayTableUnified(tbody);
+  if(tbody){
+    state.days.forEach((d,idx)=>{
+      const row = tbody.children[idx];
+      if(!row) return;
+      const a = row.querySelector('input[data-k="a"]');
+      const b = row.querySelector('input[data-k="b"]');
+      const t1= row.querySelector('input[data-k="t1"]');
+
+      // ✅ 値が0なら空欄に
+      if(a) a.value  = d.a === 0 ? '' : fmtComma(d.a);
+      if(b) b.value  = d.b === 0 ? '' : fmtComma(d.b);
+      if(t1) t1.value= d.t1 === 0 ? '' : fmtComma(d.t1);
+    });
+  }
+
+  // 合算カウンタ
+  buildCounterAll(document.getElementById('counterAll'));
+  updateSums();
+}
+
 
     // ==== Auth ====
     const AUTH_ID = 'admin';
